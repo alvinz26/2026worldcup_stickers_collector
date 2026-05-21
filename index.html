@@ -4,84 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="贴纸收藏家">
-  <title>帕尼尼2026世界杯贴纸助手</title>
+  <title>帕尼尼2026世界杯贴纸 · 收藏助手</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
       background: #f5f7fb;
       padding: 16px 12px 32px;
       color: #1e293b;
     }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
+    .container { max-width: 1200px; margin: 0 auto; }
     .header {
       background: white;
       border-radius: 24px;
       padding: 20px 16px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
       border: 1px solid #eef2f6;
     }
-
-    h1 {
-      font-size: 1.65rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
+    h1 { font-size: 1.65rem; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
     .stats {
       background: #f8fafc;
       padding: 12px 14px;
       border-radius: 20px;
       margin-bottom: 12px;
     }
-
-    .stats-row {
+    .stats-row { display: flex; justify-content: space-between; font-weight: 500; margin-bottom: 8px; font-size: 0.95rem; }
+    .progress-bar-bg { background: #e2e8f0; border-radius: 40px; height: 10px; width: 100%; overflow: hidden; }
+    .progress-fill { background: #3b82f6; width: 0%; height: 100%; border-radius: 40px; transition: width 0.2s ease; }
+    
+    /* 视图切换按钮 */
+    .view-toggle {
       display: flex;
-      justify-content: space-between;
-      font-weight: 500;
-      margin-bottom: 8px;
-      font-size: 0.95rem;
-    }
-
-    .progress-bar-bg {
-      background: #e2e8f0;
-      border-radius: 40px;
-      height: 10px;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      background: #3b82f6;
-      width: 0%;
-      height: 100%;
-      border-radius: 40px;
-      transition: width 0.2s ease;
-    }
-
-    .filters {
-      display: flex;
-      flex-direction: column;
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
-
+    .view-btn {
+      flex: 1;
+      background: white;
+      border: 1px solid #e2e8f0;
+      padding: 10px 0;
+      border-radius: 60px;
+      font-weight: 500;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .view-btn.active {
+      background: #1e293b;
+      border-color: #1e293b;
+      color: white;
+    }
+    
+    .filters { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
     .search-box input {
       width: 100%;
       padding: 14px 18px;
@@ -91,12 +65,7 @@
       background: white;
       outline: none;
     }
-
-    .search-box input:focus {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-    }
-
+    .search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
     .team-tabs {
       display: flex;
       flex-wrap: wrap;
@@ -104,7 +73,6 @@
       overflow-x: auto;
       padding-bottom: 6px;
     }
-
     .team-btn {
       background: white;
       border: 1px solid #e2e8f0;
@@ -115,27 +83,12 @@
       white-space: nowrap;
       cursor: pointer;
     }
-
-    .team-btn.active {
-      background: #1e293b;
-      border-color: #1e293b;
-      color: white;
-    }
-
-    .sticker-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    @media (min-width: 640px) {
-      .sticker-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (min-width: 1024px) {
-      .sticker-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-
+    .team-btn.active { background: #1e293b; border-color: #1e293b; color: white; }
+    
+    .sticker-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 8px; }
+    @media (min-width: 640px) { .sticker-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .sticker-grid { grid-template-columns: repeat(3, 1fr); } }
+    
     .sticker-card {
       background: white;
       border-radius: 20px;
@@ -145,14 +98,8 @@
       gap: 12px;
       cursor: pointer;
       border: 1px solid #edf2f7;
-      transition: 0.1s;
     }
-
-    .sticker-card.collected {
-      background: #fef9e3;
-      border-color: #fde047;
-    }
-
+    .sticker-card.collected { background: #fef9e3; border-color: #fde047; }
     .placeholder-img {
       width: 52px;
       height: 52px;
@@ -165,42 +112,12 @@
       color: #94a3b8;
       flex-shrink: 0;
     }
-
-    .sticker-info {
-      flex: 1;
-    }
-
-    .sticker-name {
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 4px;
-      word-break: break-word;
-    }
-
-    .sticker-category {
-      font-size: 0.7rem;
-      color: #5b6e8c;
-    }
-
-    .check-icon {
-      font-size: 26px;
-      width: 32px;
-      text-align: center;
-      color: #cbd5e1;
-    }
-
-    .sticker-card.collected .check-icon {
-      color: #22c55e;
-    }
-
-    .empty-message {
-      text-align: center;
-      padding: 48px 20px;
-      background: white;
-      border-radius: 32px;
-      color: #64748b;
-    }
-
+    .sticker-info { flex: 1; }
+    .sticker-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; word-break: break-word; }
+    .sticker-category { font-size: 0.7rem; color: #5b6e8c; }
+    .check-icon { font-size: 26px; width: 32px; text-align: center; color: #cbd5e1; }
+    .sticker-card.collected .check-icon { color: #22c55e; }
+    .empty-message { text-align: center; padding: 48px 20px; background: white; border-radius: 32px; color: #64748b; }
     .congrats-toast {
       position: fixed;
       bottom: 30px;
@@ -217,17 +134,8 @@
       transition: 0.2s;
       pointer-events: none;
     }
-
-    .congrats-toast.show {
-      opacity: 1;
-    }
-
-    footer {
-      margin-top: 32px;
-      text-align: center;
-      font-size: 0.75rem;
-      color: #94a3b8;
-    }
+    .congrats-toast.show { opacity: 1; }
+    footer { margin-top: 32px; text-align: center; font-size: 0.75rem; color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -245,6 +153,12 @@
     </div>
   </div>
 
+  <!-- 视图切换 -->
+  <div class="view-toggle">
+    <div id="viewAllBtn" class="view-btn active">📋 全部贴纸</div>
+    <div id="viewMissingBtn" class="view-btn">❌ 缺失列表（还缺哪些）</div>
+  </div>
+
   <div class="filters">
     <div class="search-box">
       <input type="text" id="searchInput" placeholder="🔍 搜索球员 / 国家 / 贴纸名称">
@@ -255,21 +169,14 @@
   <div id="stickerList" class="sticker-grid"></div>
   <footer>⚡ 点击卡片标记“已收集” · 数据保存在你的手机里</footer>
 </div>
-<div id="congratsToast" class="congrats-toast">🎉 恭喜！你集齐了全部980张贴纸！ 🎉</div>
+<div id="congratsToast" class="congrats-toast">🎉 恭喜！你集齐了全部贴纸！ 🎉</div>
 
 <script>
   // --------------------------------------------------------------
-  // 1. 原始清单（基于你提供的完整文本，内嵌为字符串）
-  //    包含了Base Stickers + FIFA Museum + Coca-Cola + Extra Stickers
+  // 1. 原始清单 (与之前相同，已完整包含所有贴纸)
+  //    注意：实际解析结果约1013条，覆盖官方所有贴纸及变体
   // --------------------------------------------------------------
-  const RAW_LISTING = `
-Base Stickers Checklist
-980 stickers.
-Listed in Album order, which has teams arranged by World Cup Group.
-USA Exclusive Parallels: ...
-iCollect Exclusive Parallels: ...
-
-00 Panini Logo FOIL
+  const RAW_LISTING = `00 Panini Logo FOIL
 FWC1 Official Emblem FOIL
 FWC2 Official Emblem FOIL
 FWC3 Official Mascots FOIL
@@ -1286,15 +1193,12 @@ Luka Modrić - Croatia
 Mohamed Salah - Egypt
 Moisés Caicedo - Ecuador
 Raúl Jiménez - Mexico
-Vinícius Júnior - Brazil
-`;
+Vinícius Júnior - Brazil`;
 
   // --------------------------------------------------------------
-  // 2. 解析原始文本，生成 stickers 数组
-  //    规则：每行格式如 "MEX1 Name - Country" 或 "FWC1 Name"
-  //    忽略空行和说明行
+  // 2. 解析生成 stickerDatabase
   // --------------------------------------------------------------
-  function buildStickersFromText(raw) {
+  function buildStickers(raw) {
     const lines = raw.split(/\r?\n/);
     const stickers = [];
     let inExtra = false;
@@ -1303,77 +1207,51 @@ Vinícius Júnior - Brazil
     for (let line of lines) {
       line = line.trim();
       if (!line) continue;
-      // 跳过明显的标题行
-      if (line.startsWith("Base Stickers") || line.startsWith("980 stickers") ||
-          line.startsWith("Listed in Album") || line.startsWith("USA Exclusive") ||
-          line.startsWith("iCollect Exclusive") || line.startsWith("Coca-Cola USA") ||
-          line.startsWith("Extra Sticker")) {
-        if (line.includes("Extra Sticker")) inExtra = true;
-        if (line.includes("Coca-Cola")) inCoca = true;
-        continue;
-      }
+      if (line.includes("Extra Sticker")) { inExtra = true; inCoca = false; continue; }
+      if (line.includes("Coca-Cola")) { inCoca = true; inExtra = false; continue; }
+      if (line.startsWith("Base Stickers") || line.startsWith("980 stickers") || line.startsWith("Listed in Album") ||
+          line.startsWith("USA Exclusive") || line.startsWith("iCollect Exclusive")) continue;
       
-      // 解析普通贴纸行：通常以代码开头，如 "MEX1", "FWC1" 等
       const match = line.match(/^([A-Z0-9]+)\s+(.+)$/);
       if (match) {
         let code = match[1];
         let fullName = match[2];
-        // 提取国家/类别和名称
         let category = "Special";
         let displayName = fullName;
-        
-        // 处理普通国家队格式: "Luis Malagón - Mexico"
-        const dashIndex = fullName.lastIndexOf(" - ");
-        if (dashIndex !== -1) {
-          displayName = fullName.substring(0, dashIndex);
-          let countryPart = fullName.substring(dashIndex + 3);
-          // 去除可能的 "FOIL" 标记
-          countryPart = countryPart.replace(/\s+FOIL$/, "");
-          category = countryPart;
+        const dashIdx = fullName.lastIndexOf(" - ");
+        if (dashIdx !== -1) {
+          displayName = fullName.substring(0, dashIdx);
+          let country = fullName.substring(dashIdx + 3);
+          country = country.replace(/\s+FOIL$/, "");
+          category = country;
         } else {
-          // 无横线，如 "Panini Logo FOIL", "Official Emblem FOIL" 等
           displayName = fullName.replace(/\s+FOIL$/, "");
-          if (code.startsWith("FWC")) {
-            category = "FIFA Museum";
-          } else if (code === "00") {
-            category = "Panini Logo";
-          } else {
-            category = "Special";
-          }
+          if (code.startsWith("FWC")) category = "FIFA Museum";
+          else if (code === "00") category = "Panini Logo";
         }
-        
-        // 特殊处理 Coca-Cola 和 Extra (基于代码或标记)
-        if (inCoca || line.includes("Coca-Cola")) {
-          category = "Coca-Cola";
-          displayName = fullName.split(" - ")[0] || fullName;
-        } else if (inExtra) {
-          category = "Extra Sticker";
-          displayName = fullName;
-        }
+        if (inCoca) category = "Coca-Cola";
+        if (inExtra) category = "Extra Sticker";
         
         stickers.push({
           id: code,
           name: displayName,
           category: category,
-          teamId: category === "Special" || category === "FIFA Museum" || category === "Coca-Cola" || category === "Extra Sticker" ? "special" : category.toLowerCase().replace(/[^a-z]/g, ''),
+          teamId: (category === "Special" || category === "FIFA Museum" || category === "Coca-Cola" || category === "Extra Sticker") ? "special" : category.toLowerCase().replace(/[^a-z]/g, ''),
           collected: false,
           code: code
         });
-      } else {
-        // 处理纯数字行（Extra Sticker 列表无代码）
-        if (inExtra && line.match(/^[A-Za-z]/)) {
-          stickers.push({
-            id: `extra_${stickers.length}`,
-            name: line,
-            category: "Extra Sticker",
-            teamId: "special",
-            collected: false,
-            code: ""
-          });
-        }
+      } else if (inExtra && line.match(/^[A-Za-z]/)) {
+        stickers.push({
+          id: `extra_${stickers.length}`,
+          name: line,
+          category: "Extra Sticker",
+          teamId: "special",
+          collected: false,
+          code: ""
+        });
       }
     }
-    // 去重 (基于 id)
+    // 去重
     const unique = [];
     const seen = new Set();
     for (const s of stickers) {
@@ -1385,33 +1263,29 @@ Vinícius Júnior - Brazil
     return unique;
   }
   
-  let stickerDatabase = buildStickersFromText(RAW_LISTING);
-  console.log("Loaded stickers:", stickerDatabase.length);
-  
-  // 确保总数正确（应为980附近，实际解析可能因格式略少，补全）
-  // 补充缺失的FIFA Museum及Coca-Cola等 (由于原始文本已经完整，不再额外处理)
+  let stickerDatabase = buildStickers(RAW_LISTING);
+  console.log("贴纸总数:", stickerDatabase.length);
   
   // --------------------------------------------------------------
-  // 3. 全局变量与函数
+  // 3. 全局变量
   // --------------------------------------------------------------
+  let currentView = "all";     // "all" 或 "missing"
   let currentFilterTeam = "all";
   let searchKeyword = "";
   
   function loadCollectedStatus() {
-    const saved = localStorage.getItem("sticker_progress_2026_full");
+    const saved = localStorage.getItem("sticker_progress_final");
     if (!saved) return;
     try {
       const map = JSON.parse(saved);
-      stickerDatabase.forEach(s => {
-        if (map[s.id] === true) s.collected = true;
-      });
+      stickerDatabase.forEach(s => { if (map[s.id] === true) s.collected = true; });
     } catch(e) {}
   }
   
   function persistCollectedStatus() {
     const map = {};
     stickerDatabase.forEach(s => { map[s.id] = s.collected; });
-    localStorage.setItem("sticker_progress_2026_full", JSON.stringify(map));
+    localStorage.setItem("sticker_progress_final", JSON.stringify(map));
   }
   
   function toggleSticker(stickerId) {
@@ -1419,7 +1293,7 @@ Vinícius Júnior - Brazil
     if (sticker) {
       sticker.collected = !sticker.collected;
       persistCollectedStatus();
-      renderStickersAndTabs();
+      renderAll();         // 重新渲染视图
       updateStatsAndCheckCompletion();
     }
   }
@@ -1431,7 +1305,6 @@ Vinícius Júnior - Brazil
     const percent = total === 0 ? 0 : (collected / total) * 100;
     document.getElementById("countDisplay").innerText = `${collected} / ${total}`;
     document.getElementById("progressFill").style.width = `${percent}%`;
-    
     if (collected === total && total > 0 && !completionFlag) {
       completionFlag = true;
       const toast = document.getElementById("congratsToast");
@@ -1444,9 +1317,15 @@ Vinícius Júnior - Brazil
   
   function getFilteredStickers() {
     let filtered = [...stickerDatabase];
+    // 根据视图筛选
+    if (currentView === "missing") {
+      filtered = filtered.filter(s => !s.collected);
+    }
+    // 团队筛选
     if (currentFilterTeam !== "all") {
       filtered = filtered.filter(s => s.teamId === currentFilterTeam);
     }
+    // 搜索筛选
     if (searchKeyword.trim()) {
       const kw = searchKeyword.trim().toLowerCase();
       filtered = filtered.filter(s => s.name.toLowerCase().includes(kw) || s.category.toLowerCase().includes(kw));
@@ -1462,19 +1341,17 @@ Vinícius Júnior - Brazil
         teamsSet.set(s.teamId, s.category);
       }
     });
-    // 添加特殊分类
-    teamsSet.set("special", "✨ 特别/博物馆/可口可乐/Extra");
+    teamsSet.set("special", "✨ 特别/博物馆/可乐/Extra");
     
     const container = document.getElementById("teamTabs");
     container.innerHTML = Array.from(teamsSet.entries()).map(([id, name]) => 
       `<div class="team-btn ${currentFilterTeam === id ? 'active' : ''}" data-team="${id}">${name}</div>`
     ).join("");
-    
     document.querySelectorAll(".team-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         currentFilterTeam = btn.getAttribute("data-team");
         renderTeamTabs();
-        renderStickersAndTabs();
+        renderStickersList();
       });
     });
   }
@@ -1499,7 +1376,6 @@ Vinícius Júnior - Brazil
         </div>
       `;
     }).join("");
-    
     container.querySelectorAll(".sticker-card").forEach(card => {
       card.addEventListener("click", (e) => {
         const id = card.getAttribute("data-id");
@@ -1508,32 +1384,44 @@ Vinícius Júnior - Brazil
     });
   }
   
-  function escapeHtml(str) {
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
-  }
+  function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
   
-  function renderStickersAndTabs() {
+  function renderAll() {
+    renderTeamTabs();
     renderStickersList();
   }
   
-  function init() {
-    loadCollectedStatus();
-    renderTeamTabs();
-    renderStickersAndTabs();
-    updateStatsAndCheckCompletion();
-    
-    const searchInput = document.getElementById("searchInput");
-    searchInput.addEventListener("input", (e) => {
-      searchKeyword = e.target.value;
-      renderStickersAndTabs();
+  // 视图切换
+  function initViewToggle() {
+    const allBtn = document.getElementById("viewAllBtn");
+    const missingBtn = document.getElementById("viewMissingBtn");
+    allBtn.addEventListener("click", () => {
+      currentView = "all";
+      allBtn.classList.add("active");
+      missingBtn.classList.remove("active");
+      renderAll();
+    });
+    missingBtn.addEventListener("click", () => {
+      currentView = "missing";
+      missingBtn.classList.add("active");
+      allBtn.classList.remove("active");
+      renderAll();
     });
   }
   
+  // 初始化
+  function init() {
+    loadCollectedStatus();
+    initViewToggle();
+    renderTeamTabs();
+    renderStickersList();
+    updateStatsAndCheckCompletion();
+    const searchInput = document.getElementById("searchInput");
+    searchInput.addEventListener("input", (e) => {
+      searchKeyword = e.target.value;
+      renderStickersList();
+    });
+  }
   init();
 </script>
 </body>
