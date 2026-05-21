@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="贴纸收藏家">
   <title>帕尼尼2026世界杯贴纸 · 收藏助手</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='white' stroke='black' stroke-width='2'/%3E%3Cpolygon points='50,20 60,35 80,35 65,48 70,65 50,55 30,65 35,48 20,35 40,35' fill='black' /%3E%3C/svg%3E">
   <style>
@@ -33,7 +35,6 @@
     .progress-bar-bg { background: #e2e8f0; border-radius: 40px; height: 10px; width: 100%; overflow: hidden; }
     .progress-fill { background: #3b82f6; width: 0%; height: 100%; border-radius: 40px; transition: width 0.2s ease; }
     
-    /* 视图切换按钮 */
     .view-toggle {
       display: flex;
       gap: 12px;
@@ -50,13 +51,14 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    .view-btn.active {
-      background: #1e293b;
-      border-color: #1e293b;
-      color: white;
-    }
+    .view-btn.active { background: #1e293b; border-color: #1e293b; color: white; }
     
     .filters { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
     .search-box input {
       width: 100%;
       padding: 14px 18px;
@@ -65,8 +67,27 @@
       font-size: 1rem;
       background: white;
       outline: none;
+      padding-right: 50px;
     }
     .search-box input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); }
+    .clear-search {
+      position: absolute;
+      right: 16px;
+      background: #e2e8f0;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      color: #475569;
+    }
+    .clear-search:hover { background: #cbd5e1; }
+    
     .team-tabs {
       display: flex;
       flex-wrap: wrap;
@@ -101,7 +122,7 @@
       border: 1px solid #edf2f7;
     }
     .sticker-card.collected { background: #fef9e3; border-color: #fde047; }
-    .placeholder-img {
+    .sticker-icon {
       width: 52px;
       height: 52px;
       background: #f1f5f9;
@@ -109,13 +130,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      color: #94a3b8;
+      font-size: 28px;
       flex-shrink: 0;
     }
     .sticker-info { flex: 1; }
     .sticker-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; word-break: break-word; }
-    .sticker-category { font-size: 0.7rem; color: #5b6e8c; }
+    .sticker-code {
+      font-size: 0.7rem;
+      color: #5b6e8c;
+      font-family: monospace;
+      letter-spacing: 0.3px;
+    }
     .check-icon { font-size: 26px; width: 32px; text-align: center; color: #cbd5e1; }
     .sticker-card.collected .check-icon { color: #22c55e; }
     .empty-message { text-align: center; padding: 48px 20px; background: white; border-radius: 32px; color: #64748b; }
@@ -154,15 +179,15 @@
     </div>
   </div>
 
-  <!-- 视图切换 -->
   <div class="view-toggle">
     <div id="viewAllBtn" class="view-btn active">📋 全部贴纸</div>
-    <div id="viewMissingBtn" class="view-btn">❌ 缺失列表（还缺哪些）</div>
+    <div id="viewMissingBtn" class="view-btn">❌ 缺失列表</div>
   </div>
 
   <div class="filters">
     <div class="search-box">
-      <input type="text" id="searchInput" placeholder="🔍 搜索球员 / 国家 / 贴纸名称">
+      <input type="text" id="searchInput" placeholder="🔍 搜索球员 / 国家 / 编号...">
+      <button class="clear-search" id="clearSearchBtn" aria-label="清除搜索">✖️</button>
     </div>
     <div class="team-tabs" id="teamTabs"></div>
   </div>
@@ -174,8 +199,8 @@
 
 <script>
   // --------------------------------------------------------------
-  // 1. 原始清单 (与之前相同，已完整包含所有贴纸)
-  //    注意：实际解析结果约1013条，覆盖官方所有贴纸及变体
+  // 完整贴纸原始数据（基于用户提供的清单，涵盖所有国家队+特别+FIFA Museum+可口可乐+Extra）
+  // 为了代码可靠性，直接内嵌完整文本（已确认可解析出约1013张贴纸）
   // --------------------------------------------------------------
   const RAW_LISTING = `00 Panini Logo FOIL
 FWC1 Official Emblem FOIL
@@ -1196,15 +1221,11 @@ Moisés Caicedo - Ecuador
 Raúl Jiménez - Mexico
 Vinícius Júnior - Brazil`;
 
-  // --------------------------------------------------------------
-  // 2. 解析生成 stickerDatabase
-  // --------------------------------------------------------------
+  // ---------- 解析贴纸 ----------
   function buildStickers(raw) {
     const lines = raw.split(/\r?\n/);
     const stickers = [];
-    let inExtra = false;
-    let inCoca = false;
-    
+    let inExtra = false, inCoca = false;
     for (let line of lines) {
       line = line.trim();
       if (!line) continue;
@@ -1212,7 +1233,6 @@ Vinícius Júnior - Brazil`;
       if (line.includes("Coca-Cola")) { inCoca = true; inExtra = false; continue; }
       if (line.startsWith("Base Stickers") || line.startsWith("980 stickers") || line.startsWith("Listed in Album") ||
           line.startsWith("USA Exclusive") || line.startsWith("iCollect Exclusive")) continue;
-      
       const match = line.match(/^([A-Z0-9]+)\s+(.+)$/);
       if (match) {
         let code = match[1];
@@ -1232,7 +1252,6 @@ Vinícius Júnior - Brazil`;
         }
         if (inCoca) category = "Coca-Cola";
         if (inExtra) category = "Extra Sticker";
-        
         stickers.push({
           id: code,
           name: displayName,
@@ -1263,17 +1282,26 @@ Vinícius Júnior - Brazil`;
     }
     return unique;
   }
-  
+
   let stickerDatabase = buildStickers(RAW_LISTING);
   console.log("贴纸总数:", stickerDatabase.length);
-  
-  // --------------------------------------------------------------
-  // 3. 全局变量
-  // --------------------------------------------------------------
+
+  // 判断是否为普通球员贴纸（用于显示跑步图标）
+  function isPlayerSticker(sticker) {
+    if (sticker.name.includes("Team Logo") || sticker.name.includes("Team Photo") ||
+        sticker.category === "FIFA Museum" || sticker.category === "Coca-Cola" ||
+        sticker.category === "Extra Sticker" || sticker.category === "Special" ||
+        sticker.id === "00") {
+      return false;
+    }
+    return true;
+  }
+
+  // 全局变量
   let currentView = "all";     // "all" 或 "missing"
   let currentFilterTeam = "all";
   let searchKeyword = "";
-  
+
   function loadCollectedStatus() {
     const saved = localStorage.getItem("sticker_progress_final");
     if (!saved) return;
@@ -1282,23 +1310,23 @@ Vinícius Júnior - Brazil`;
       stickerDatabase.forEach(s => { if (map[s.id] === true) s.collected = true; });
     } catch(e) {}
   }
-  
+
   function persistCollectedStatus() {
     const map = {};
     stickerDatabase.forEach(s => { map[s.id] = s.collected; });
     localStorage.setItem("sticker_progress_final", JSON.stringify(map));
   }
-  
+
   function toggleSticker(stickerId) {
     const sticker = stickerDatabase.find(s => s.id === stickerId);
     if (sticker) {
       sticker.collected = !sticker.collected;
       persistCollectedStatus();
-      renderAll();         // 重新渲染视图
+      renderAll();
       updateStatsAndCheckCompletion();
     }
   }
-  
+
   let completionFlag = false;
   function updateStatsAndCheckCompletion() {
     const collected = stickerDatabase.filter(s => s.collected).length;
@@ -1315,25 +1343,26 @@ Vinícius Júnior - Brazil`;
       completionFlag = false;
     }
   }
-  
+
   function getFilteredStickers() {
     let filtered = [...stickerDatabase];
-    // 根据视图筛选
     if (currentView === "missing") {
       filtered = filtered.filter(s => !s.collected);
     }
-    // 团队筛选
     if (currentFilterTeam !== "all") {
       filtered = filtered.filter(s => s.teamId === currentFilterTeam);
     }
-    // 搜索筛选
     if (searchKeyword.trim()) {
       const kw = searchKeyword.trim().toLowerCase();
-      filtered = filtered.filter(s => s.name.toLowerCase().includes(kw) || s.category.toLowerCase().includes(kw));
+      filtered = filtered.filter(s => 
+        s.name.toLowerCase().includes(kw) || 
+        s.category.toLowerCase().includes(kw) || 
+        (s.code && s.code.toLowerCase().includes(kw))
+      );
     }
     return filtered;
   }
-  
+
   function renderTeamTabs() {
     const teamsSet = new Map();
     teamsSet.set("all", "全部国家/类别");
@@ -1343,7 +1372,6 @@ Vinícius Júnior - Brazil`;
       }
     });
     teamsSet.set("special", "✨ 特别/博物馆/可乐/Extra");
-    
     const container = document.getElementById("teamTabs");
     container.innerHTML = Array.from(teamsSet.entries()).map(([id, name]) => 
       `<div class="team-btn ${currentFilterTeam === id ? 'active' : ''}" data-team="${id}">${name}</div>`
@@ -1356,7 +1384,7 @@ Vinícius Júnior - Brazil`;
       });
     });
   }
-  
+
   function renderStickersList() {
     const container = document.getElementById("stickerList");
     const filtered = getFilteredStickers();
@@ -1366,12 +1394,14 @@ Vinícius Júnior - Brazil`;
     }
     container.innerHTML = filtered.map(s => {
       const collectedClass = s.collected ? "collected" : "";
+      const icon = isPlayerSticker(s) ? '🏃‍➡️' : '🃏';
+      const displayCode = s.code || s.id;
       return `
         <div class="sticker-card ${collectedClass}" data-id="${s.id}">
-          <div class="placeholder-img">🃏</div>
+          <div class="sticker-icon">${icon}</div>
           <div class="sticker-info">
             <div class="sticker-name">${escapeHtml(s.name)}</div>
-            <div class="sticker-category">${escapeHtml(s.category)}</div>
+            <div class="sticker-code">${escapeHtml(displayCode)}</div>
           </div>
           <div class="check-icon">${s.collected ? '✅' : '⬜'}</div>
         </div>
@@ -1384,15 +1414,17 @@ Vinícius Júnior - Brazil`;
       });
     });
   }
-  
-  function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-  
+
+  function escapeHtml(str) { 
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
+  }
+
   function renderAll() {
     renderTeamTabs();
     renderStickersList();
   }
-  
-  // 视图切换
+
   function initViewToggle() {
     const allBtn = document.getElementById("viewAllBtn");
     const missingBtn = document.getElementById("viewMissingBtn");
@@ -1409,8 +1441,7 @@ Vinícius Júnior - Brazil`;
       renderAll();
     });
   }
-  
-  // 初始化
+
   function init() {
     loadCollectedStatus();
     initViewToggle();
@@ -1420,6 +1451,12 @@ Vinícius Júnior - Brazil`;
     const searchInput = document.getElementById("searchInput");
     searchInput.addEventListener("input", (e) => {
       searchKeyword = e.target.value;
+      renderStickersList();
+    });
+    const clearBtn = document.getElementById("clearSearchBtn");
+    clearBtn.addEventListener("click", () => {
+      searchInput.value = "";
+      searchKeyword = "";
       renderStickersList();
     });
   }
