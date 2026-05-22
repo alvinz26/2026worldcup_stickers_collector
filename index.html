@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="贴纸收藏家">
-  <title>帕尼尼2026世界杯贴纸 · 收藏助手</title>
+  <title>帕尼尼2026世界杯贴纸助手 · 中英双语</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='white' stroke='black' stroke-width='2'/%3E%3Cpolygon points='50,20 60,35 80,35 65,48 70,65 50,55 30,65 35,48 20,35 40,35' fill='black' /%3E%3C/svg%3E">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,8 +23,34 @@
       padding: 20px 16px;
       margin-bottom: 20px;
       border: 1px solid #eef2f6;
+      position: relative;
     }
-    h1 { font-size: 1.65rem; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .lang-switch {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: #f1f5f9;
+      border-radius: 30px;
+      padding: 4px;
+      display: flex;
+      gap: 4px;
+    }
+    .lang-btn {
+      background: transparent;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 30px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: #64748b;
+      transition: 0.1s;
+    }
+    .lang-btn.active {
+      background: #1e293b;
+      color: white;
+    }
+    h1 { font-size: 1.65rem; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-right: 100px; }
     .stats {
       background: #f8fafc;
       padding: 12px 14px;
@@ -167,10 +193,14 @@
 <body>
 <div class="container">
   <div class="header">
-    <h1>🏆 2026 帕尼尼世界杯贴纸</h1>
+    <div class="lang-switch">
+      <button class="lang-btn" data-lang="zh">中文</button>
+      <button class="lang-btn" data-lang="en">English</button>
+    </div>
+    <h1 id="mainTitle">🏆 2026 帕尼尼世界杯贴纸</h1>
     <div class="stats">
       <div class="stats-row">
-        <span>📋 我的收集进度</span>
+        <span id="progressLabel">📋 我的收集进度</span>
         <span id="countDisplay">0 / 0</span>
       </div>
       <div class="progress-bar-bg">
@@ -193,16 +223,15 @@
   </div>
 
   <div id="stickerList" class="sticker-grid"></div>
-  <footer>⚡ 点击卡片标记“已收集” · 数据保存在你的手机里</footer>
+  <footer id="footerText">⚡ 点击卡片标记“已收集” · 数据保存在你的手机里</footer>
 </div>
 <div id="congratsToast" class="congrats-toast">🎉 恭喜！你集齐了全部贴纸！ 🎉</div>
 
 <script>
-  // --------------------------------------------------------------
-  // 完整贴纸原始数据（基于用户提供的清单，涵盖所有国家队+特别+FIFA Museum+可口可乐+Extra）
-  // 为了代码可靠性，直接内嵌完整文本（已确认可解析出约1013张贴纸）
-  // --------------------------------------------------------------
-  const RAW_LISTING = `00 Panini Logo FOIL
+// --------------------------------------------------------------
+// 完整贴纸原始数据（基于你提供的清单，共1013条，覆盖全部官方贴纸）
+// --------------------------------------------------------------
+const RAW_LISTING = `00 Panini Logo FOIL
 FWC1 Official Emblem FOIL
 FWC2 Official Emblem FOIL
 FWC3 Official Mascots FOIL
@@ -1221,246 +1250,293 @@ Moisés Caicedo - Ecuador
 Raúl Jiménez - Mexico
 Vinícius Júnior - Brazil`;
 
-  // ---------- 解析贴纸 ----------
-  function buildStickers(raw) {
-    const lines = raw.split(/\r?\n/);
-    const stickers = [];
-    let inExtra = false, inCoca = false;
-    for (let line of lines) {
-      line = line.trim();
-      if (!line) continue;
-      if (line.includes("Extra Sticker")) { inExtra = true; inCoca = false; continue; }
-      if (line.includes("Coca-Cola")) { inCoca = true; inExtra = false; continue; }
-      if (line.startsWith("Base Stickers") || line.startsWith("980 stickers") || line.startsWith("Listed in Album") ||
-          line.startsWith("USA Exclusive") || line.startsWith("iCollect Exclusive")) continue;
-      const match = line.match(/^([A-Z0-9]+)\s+(.+)$/);
-      if (match) {
-        let code = match[1];
-        let fullName = match[2];
-        let category = "Special";
-        let displayName = fullName;
-        const dashIdx = fullName.lastIndexOf(" - ");
-        if (dashIdx !== -1) {
-          displayName = fullName.substring(0, dashIdx);
-          let country = fullName.substring(dashIdx + 3);
-          country = country.replace(/\s+FOIL$/, "");
-          category = country;
-        } else {
-          displayName = fullName.replace(/\s+FOIL$/, "");
-          if (code.startsWith("FWC")) category = "FIFA Museum";
-          else if (code === "00") category = "Panini Logo";
-        }
-        if (inCoca) category = "Coca-Cola";
-        if (inExtra) category = "Extra Sticker";
-        stickers.push({
-          id: code,
-          name: displayName,
-          category: category,
-          teamId: (category === "Special" || category === "FIFA Museum" || category === "Coca-Cola" || category === "Extra Sticker") ? "special" : category.toLowerCase().replace(/[^a-z]/g, ''),
-          collected: false,
-          code: code
-        });
-      } else if (inExtra && line.match(/^[A-Za-z]/)) {
-        stickers.push({
-          id: `extra_${stickers.length}`,
-          name: line,
-          category: "Extra Sticker",
-          teamId: "special",
-          collected: false,
-          code: ""
-        });
+// ---------- 解析贴纸 ----------
+function buildStickers(raw) {
+  const lines = raw.split(/\r?\n/);
+  const stickers = [];
+  let inExtra = false, inCoca = false;
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+    if (line.includes("Extra Sticker")) { inExtra = true; inCoca = false; continue; }
+    if (line.includes("Coca-Cola")) { inCoca = true; inExtra = false; continue; }
+    if (line.startsWith("Base Stickers") || line.startsWith("980 stickers") || line.startsWith("Listed in Album") ||
+        line.startsWith("USA Exclusive") || line.startsWith("iCollect Exclusive")) continue;
+    const match = line.match(/^([A-Z0-9]+)\s+(.+)$/);
+    if (match) {
+      let code = match[1];
+      let fullName = match[2];
+      let category = "Special";
+      let displayName = fullName;
+      const dashIdx = fullName.lastIndexOf(" - ");
+      if (dashIdx !== -1) {
+        displayName = fullName.substring(0, dashIdx);
+        let country = fullName.substring(dashIdx + 3);
+        country = country.replace(/\s+FOIL$/, "");
+        category = country;
+      } else {
+        displayName = fullName.replace(/\s+FOIL$/, "");
+        if (code.startsWith("FWC")) category = "FIFA Museum";
+        else if (code === "00") category = "Panini Logo";
       }
-    }
-    // 去重
-    const unique = [];
-    const seen = new Set();
-    for (const s of stickers) {
-      if (!seen.has(s.id)) {
-        seen.add(s.id);
-        unique.push(s);
-      }
-    }
-    return unique;
-  }
-
-  let stickerDatabase = buildStickers(RAW_LISTING);
-  console.log("贴纸总数:", stickerDatabase.length);
-
-  // 判断是否为普通球员贴纸（用于显示跑步图标）
-  function isPlayerSticker(sticker) {
-    if (sticker.name.includes("Team Logo") || sticker.name.includes("Team Photo") ||
-        sticker.category === "FIFA Museum" || sticker.category === "Coca-Cola" ||
-        sticker.category === "Extra Sticker" || sticker.category === "Special" ||
-        sticker.id === "00") {
-      return false;
-    }
-    return true;
-  }
-
-  // 全局变量
-  let currentView = "all";     // "all" 或 "missing"
-  let currentFilterTeam = "all";
-  let searchKeyword = "";
-
-  function loadCollectedStatus() {
-    const saved = localStorage.getItem("sticker_progress_final");
-    if (!saved) return;
-    try {
-      const map = JSON.parse(saved);
-      stickerDatabase.forEach(s => { if (map[s.id] === true) s.collected = true; });
-    } catch(e) {}
-  }
-
-  function persistCollectedStatus() {
-    const map = {};
-    stickerDatabase.forEach(s => { map[s.id] = s.collected; });
-    localStorage.setItem("sticker_progress_final", JSON.stringify(map));
-  }
-
-  function toggleSticker(stickerId) {
-    const sticker = stickerDatabase.find(s => s.id === stickerId);
-    if (sticker) {
-      sticker.collected = !sticker.collected;
-      persistCollectedStatus();
-      renderAll();
-      updateStatsAndCheckCompletion();
-    }
-  }
-
-  let completionFlag = false;
-  function updateStatsAndCheckCompletion() {
-    const collected = stickerDatabase.filter(s => s.collected).length;
-    const total = stickerDatabase.length;
-    const percent = total === 0 ? 0 : (collected / total) * 100;
-    document.getElementById("countDisplay").innerText = `${collected} / ${total}`;
-    document.getElementById("progressFill").style.width = `${percent}%`;
-    if (collected === total && total > 0 && !completionFlag) {
-      completionFlag = true;
-      const toast = document.getElementById("congratsToast");
-      toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 4000);
-    } else if (collected !== total) {
-      completionFlag = false;
-    }
-  }
-
-  function getFilteredStickers() {
-    let filtered = [...stickerDatabase];
-    if (currentView === "missing") {
-      filtered = filtered.filter(s => !s.collected);
-    }
-    if (currentFilterTeam !== "all") {
-      filtered = filtered.filter(s => s.teamId === currentFilterTeam);
-    }
-    if (searchKeyword.trim()) {
-      const kw = searchKeyword.trim().toLowerCase();
-      filtered = filtered.filter(s => 
-        s.name.toLowerCase().includes(kw) || 
-        s.category.toLowerCase().includes(kw) || 
-        (s.code && s.code.toLowerCase().includes(kw))
-      );
-    }
-    return filtered;
-  }
-
-  function renderTeamTabs() {
-    const teamsSet = new Map();
-    teamsSet.set("all", "全部国家/类别");
-    stickerDatabase.forEach(s => {
-      if (s.teamId !== "special" && s.category !== "Special" && s.category !== "FIFA Museum" && s.category !== "Coca-Cola" && s.category !== "Extra Sticker") {
-        teamsSet.set(s.teamId, s.category);
-      }
-    });
-    teamsSet.set("special", "✨ 特别/博物馆/可乐/Extra");
-    const container = document.getElementById("teamTabs");
-    container.innerHTML = Array.from(teamsSet.entries()).map(([id, name]) => 
-      `<div class="team-btn ${currentFilterTeam === id ? 'active' : ''}" data-team="${id}">${name}</div>`
-    ).join("");
-    document.querySelectorAll(".team-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        currentFilterTeam = btn.getAttribute("data-team");
-        renderTeamTabs();
-        renderStickersList();
+      if (inCoca) category = "Coca-Cola";
+      if (inExtra) category = "Extra Sticker";
+      stickers.push({
+        id: code,
+        name: displayName,
+        category: category,
+        teamId: (category === "Special" || category === "FIFA Museum" || category === "Coca-Cola" || category === "Extra Sticker") ? "special" : category.toLowerCase().replace(/[^a-z]/g, ''),
+        collected: false,
+        code: code
       });
-    });
-  }
-
-  function renderStickersList() {
-    const container = document.getElementById("stickerList");
-    const filtered = getFilteredStickers();
-    if (filtered.length === 0) {
-      container.innerHTML = `<div class="empty-message">✨ 没有找到贴纸，试试其他关键词 ✨</div>`;
-      return;
-    }
-    container.innerHTML = filtered.map(s => {
-      const collectedClass = s.collected ? "collected" : "";
-      const icon = isPlayerSticker(s) ? '🏃‍➡️' : '🃏';
-      const displayCode = s.code || s.id;
-      return `
-        <div class="sticker-card ${collectedClass}" data-id="${s.id}">
-          <div class="sticker-icon">${icon}</div>
-          <div class="sticker-info">
-            <div class="sticker-name">${escapeHtml(s.name)}</div>
-            <div class="sticker-code">${escapeHtml(displayCode)}</div>
-          </div>
-          <div class="check-icon">${s.collected ? '✅' : '⬜'}</div>
-        </div>
-      `;
-    }).join("");
-    container.querySelectorAll(".sticker-card").forEach(card => {
-      card.addEventListener("click", (e) => {
-        const id = card.getAttribute("data-id");
-        if (id) toggleSticker(id);
+    } else if (inExtra && line.match(/^[A-Za-z]/)) {
+      stickers.push({
+        id: `extra_${stickers.length}`,
+        name: line,
+        category: "Extra Sticker",
+        teamId: "special",
+        collected: false,
+        code: ""
       });
-    });
+    }
   }
-
-  function escapeHtml(str) { 
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
+  const unique = [];
+  const seen = new Set();
+  for (const s of stickers) {
+    if (!seen.has(s.id)) {
+      seen.add(s.id);
+      unique.push(s);
+    }
   }
+  return unique;
+}
 
-  function renderAll() {
-    renderTeamTabs();
-    renderStickersList();
+let stickerDatabase = buildStickers(RAW_LISTING);
+console.log("Loaded stickers:", stickerDatabase.length);
+
+function isPlayerSticker(sticker) {
+  if (sticker.name.includes("Team Logo") || sticker.name.includes("Team Photo") ||
+      sticker.category === "FIFA Museum" || sticker.category === "Coca-Cola" ||
+      sticker.category === "Extra Sticker" || sticker.category === "Special" ||
+      sticker.id === "00") {
+    return false;
   }
+  return true;
+}
 
-  function initViewToggle() {
-    const allBtn = document.getElementById("viewAllBtn");
-    const missingBtn = document.getElementById("viewMissingBtn");
-    allBtn.addEventListener("click", () => {
-      currentView = "all";
-      allBtn.classList.add("active");
-      missingBtn.classList.remove("active");
-      renderAll();
-    });
-    missingBtn.addEventListener("click", () => {
-      currentView = "missing";
-      missingBtn.classList.add("active");
-      allBtn.classList.remove("active");
-      renderAll();
-    });
+// 全局状态
+let currentView = "all";
+let currentFilterTeam = "all";
+let searchKeyword = "";
+
+// 双语文本
+const i18n = {
+  zh: {
+    mainTitle: "🏆 2026 帕尼尼世界杯贴纸",
+    progressLabel: "📋 我的收集进度",
+    viewAll: "📋 全部贴纸",
+    viewMissing: "❌ 缺失列表",
+    searchPlaceholder: "🔍 搜索球员 / 国家 / 编号...",
+    footer: "⚡ 点击卡片标记“已收集” · 数据保存在你的手机里",
+    congrats: "🎉 恭喜！你集齐了全部贴纸！ 🎉",
+    empty: "✨ 没有找到贴纸，试试其他关键词 ✨",
+    allTeams: "全部国家/类别",
+    special: "✨ 特别/博物馆/可乐/Extra"
+  },
+  en: {
+    mainTitle: "🏆 2026 Panini World Cup Stickers",
+    progressLabel: "📋 My Collection Progress",
+    viewAll: "📋 All Stickers",
+    viewMissing: "❌ Missing List",
+    searchPlaceholder: "🔍 Search player / country / sticker code...",
+    footer: "⚡ Tap on a sticker to mark as collected · Data is saved locally",
+    congrats: "🎉 Congratulations! You've collected all stickers! 🎉",
+    empty: "✨ No stickers found. Try a different keyword. ✨",
+    allTeams: "All Teams / Categories",
+    special: "✨ Special / Museum / Coke / Extra"
   }
+};
 
-  function init() {
-    loadCollectedStatus();
-    initViewToggle();
-    renderTeamTabs();
-    renderStickersList();
+let currentLang = localStorage.getItem('app_lang') || 'zh';
+
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('app_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    if (btn.getAttribute('data-lang') === lang) btn.classList.add('active');
+    else btn.classList.remove('active');
+  });
+  document.getElementById('mainTitle').innerText = i18n[lang].mainTitle;
+  document.getElementById('progressLabel').innerText = i18n[lang].progressLabel;
+  document.getElementById('viewAllBtn').innerText = i18n[lang].viewAll;
+  document.getElementById('viewMissingBtn').innerText = i18n[lang].viewMissing;
+  document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
+  document.getElementById('footerText').innerText = i18n[lang].footer;
+  document.getElementById('congratsToast').innerText = i18n[lang].congrats;
+  renderTeamTabs();
+  renderStickersList();
+}
+
+// 存储
+function loadCollectedStatus() {
+  const saved = localStorage.getItem("sticker_progress_final");
+  if (!saved) return;
+  try {
+    const map = JSON.parse(saved);
+    stickerDatabase.forEach(s => { if (map[s.id] === true) s.collected = true; });
+  } catch(e) {}
+}
+
+function persistCollectedStatus() {
+  const map = {};
+  stickerDatabase.forEach(s => { map[s.id] = s.collected; });
+  localStorage.setItem("sticker_progress_final", JSON.stringify(map));
+}
+
+function toggleSticker(stickerId) {
+  const sticker = stickerDatabase.find(s => s.id === stickerId);
+  if (sticker) {
+    sticker.collected = !sticker.collected;
+    persistCollectedStatus();
+    renderAll();
     updateStatsAndCheckCompletion();
-    const searchInput = document.getElementById("searchInput");
-    searchInput.addEventListener("input", (e) => {
-      searchKeyword = e.target.value;
-      renderStickersList();
-    });
-    const clearBtn = document.getElementById("clearSearchBtn");
-    clearBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      searchKeyword = "";
-      renderStickersList();
-    });
   }
-  init();
+}
+
+let completionFlag = false;
+function updateStatsAndCheckCompletion() {
+  const collected = stickerDatabase.filter(s => s.collected).length;
+  const total = stickerDatabase.length;
+  const percent = total === 0 ? 0 : (collected / total) * 100;
+  document.getElementById("countDisplay").innerText = `${collected} / ${total}`;
+  document.getElementById("progressFill").style.width = `${percent}%`;
+  if (collected === total && total > 0 && !completionFlag) {
+    completionFlag = true;
+    const toast = document.getElementById("congratsToast");
+    toast.innerText = i18n[currentLang].congrats;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 4000);
+  } else if (collected !== total) {
+    completionFlag = false;
+  }
+}
+
+function getFilteredStickers() {
+  let filtered = [...stickerDatabase];
+  if (currentView === "missing") filtered = filtered.filter(s => !s.collected);
+  if (currentFilterTeam !== "all") filtered = filtered.filter(s => s.teamId === currentFilterTeam);
+  if (searchKeyword.trim()) {
+    const kw = searchKeyword.trim().toLowerCase();
+    filtered = filtered.filter(s => 
+      s.name.toLowerCase().includes(kw) || 
+      s.category.toLowerCase().includes(kw) || 
+      (s.code && s.code.toLowerCase().includes(kw))
+    );
+  }
+  return filtered;
+}
+
+function renderTeamTabs() {
+  const teamsSet = new Map();
+  teamsSet.set("all", i18n[currentLang].allTeams);
+  stickerDatabase.forEach(s => {
+    if (s.teamId !== "special" && s.category !== "Special" && s.category !== "FIFA Museum" && s.category !== "Coca-Cola" && s.category !== "Extra Sticker") {
+      teamsSet.set(s.teamId, s.category);
+    }
+  });
+  teamsSet.set("special", i18n[currentLang].special);
+  const container = document.getElementById("teamTabs");
+  container.innerHTML = Array.from(teamsSet.entries()).map(([id, name]) => 
+    `<div class="team-btn ${currentFilterTeam === id ? 'active' : ''}" data-team="${id}">${escapeHtml(name)}</div>`
+  ).join("");
+  document.querySelectorAll(".team-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      currentFilterTeam = btn.getAttribute("data-team");
+      renderTeamTabs();
+      renderStickersList();
+    });
+  });
+}
+
+function renderStickersList() {
+  const container = document.getElementById("stickerList");
+  const filtered = getFilteredStickers();
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-message">${i18n[currentLang].empty}</div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(s => {
+    const collectedClass = s.collected ? "collected" : "";
+    const icon = isPlayerSticker(s) ? '🏃‍➡️' : '🃏';
+    const displayCode = s.code || s.id;
+    return `
+      <div class="sticker-card ${collectedClass}" data-id="${s.id}">
+        <div class="sticker-icon">${icon}</div>
+        <div class="sticker-info">
+          <div class="sticker-name">${escapeHtml(s.name)}</div>
+          <div class="sticker-code">${escapeHtml(displayCode)}</div>
+        </div>
+        <div class="check-icon">${s.collected ? '✅' : '⬜'}</div>
+      </div>
+    `;
+  }).join("");
+  container.querySelectorAll(".sticker-card").forEach(card => {
+    card.addEventListener("click", (e) => {
+      const id = card.getAttribute("data-id");
+      if (id) toggleSticker(id);
+    });
+  });
+}
+
+function escapeHtml(str) { 
+  if (!str) return '';
+  return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); 
+}
+
+function renderAll() {
+  renderTeamTabs();
+  renderStickersList();
+}
+
+function init() {
+  loadCollectedStatus();
+  setLanguage(currentLang);  // 应用语言设置
+  // 绑定视图切换
+  const allBtn = document.getElementById("viewAllBtn");
+  const missingBtn = document.getElementById("viewMissingBtn");
+  allBtn.addEventListener("click", () => {
+    currentView = "all";
+    allBtn.classList.add("active");
+    missingBtn.classList.remove("active");
+    renderAll();
+  });
+  missingBtn.addEventListener("click", () => {
+    currentView = "missing";
+    missingBtn.classList.add("active");
+    allBtn.classList.remove("active");
+    renderAll();
+  });
+  const searchInput = document.getElementById("searchInput");
+  searchInput.addEventListener("input", (e) => {
+    searchKeyword = e.target.value;
+    renderStickersList();
+  });
+  const clearBtn = document.getElementById("clearSearchBtn");
+  clearBtn.addEventListener("click", () => {
+    searchInput.value = "";
+    searchKeyword = "";
+    renderStickersList();
+  });
+  // 语言按钮
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const lang = btn.getAttribute('data-lang');
+      setLanguage(lang);
+    });
+  });
+  updateStatsAndCheckCompletion();
+}
+init();
 </script>
 </body>
 </html>
