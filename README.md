@@ -4,7 +4,6 @@ A bilingual (Chinese/English) web app to help collectors track their progress of
 Supports searching by player name, country, or sticker code, and automatically saves your collection locally.
 
 🌐 **Live Demo**: [https://2026worldcup-stickers-collector.vercel.app/]  
-*(Replace with your actual Vercel deployment link, e.g., https://2026worldcup-stickers-collector.vercel.app)*
 
 ## ✨ Features
 
