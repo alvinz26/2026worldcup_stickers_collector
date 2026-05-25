@@ -229,8 +229,8 @@
 
 <script>
 // --------------------------------------------------------------
-// 完整贴纸原始数据（包含所有国家队 + FIFA博物馆 + 新版可口可乐 + 额外贴纸）
-// 新版 Coca‑Cola 清单（CC1-CC14）已替换旧版12张
+// 完整贴纸原始数据（包含全部国家队、FIFA Museum、Panini Logo、
+// 可口可乐（20张完整版）、Extra Stickers）
 // --------------------------------------------------------------
 const RAW_LISTING = `00 Panini Logo FOIL
 FWC1 Official Emblem FOIL
@@ -1213,21 +1213,27 @@ FWC17 Italy 2006 - FIFA Museum FOIL
 FWC18 Germany 2014 - FIFA Museum FOIL
 FWC19 Argentina 2022 - FIFA Museum FOIL
 
-Coca-Cola Stickers
-CC1 Lamine Yamal - Spain
-CC2 Joshua Kimmich - Germany
-CC3 Harry Kane - England
-CC4 Santiago Giménez - Mexico
-CC5 Josko Gvardiol - Croatia
-CC6 Federico Valverde - Uruguay
-CC7 Jefferson Lerma - Colombia
-CC8 Enner Valencia - Ecuador
-CC9 Gabriel Magalhaes - Brazil
-CC10 Virgil van Dijk - Netherlands
-CC11 Alphonso Davies - Canada
-CC12 Emiliano Martínez - Argentina
-CC13 Raúl Jiménez - Mexico
-CC14 Lautaro Martínez - Argentina
+Coca-Cola Stickers (Complete Set of 20 unique stickers)
+1. Lamine Yamal - Spain
+2. Joshua Kimmich - Germany
+3. Harry Kane - England
+4. Santiago Giménez - Mexico
+5. Antonee Robinson - USA
+6. Jefferson Lerma - Colombia
+7. Edson Álvarez - Mexico
+8. Virgil van Dijk - Netherlands
+9. Alphonso Davies - Canada
+10. Weston McKennie - USA
+11. Lautaro Martínez - Argentina
+12. Gabriel Magalhães - Brazil
+13. Eduardo Camavinga - France
+14. Josko Gvardiol - Croatia
+15. Federico Valverde - Uruguay
+16. Enner Valencia - Ecuador
+17. William Saliba - France
+18. Jordan Ayew - Ghana
+19. Emiliano Martinez - Argentina
+20. Raúl Jiménez - Mexico
 
 Extra Sticker Checklist
 20 stickers
@@ -1261,7 +1267,7 @@ function buildStickers(raw) {
     line = line.trim();
     if (!line) continue;
     if (line.includes("Extra Sticker")) { inExtra = true; inCoca = false; continue; }
-    if (line.includes("Coca-Cola Stickers")) { inCoca = true; inExtra = false; continue; }
+    if (line.includes("Coca-Cola")) { inCoca = true; inExtra = false; continue; }
     if (line.startsWith("Base Stickers") || line.startsWith("980 stickers") || line.startsWith("Listed in Album") ||
         line.startsWith("USA Exclusive") || line.startsWith("iCollect Exclusive")) continue;
     const match = line.match(/^([A-Z0-9]+)\s+(.+)$/);
@@ -1348,6 +1354,7 @@ const i18n = {
     congrats: "🎉 恭喜！你集齐了全部贴纸！ 🎉",
     empty: "✨ 没有找到贴纸，试试其他关键词 ✨",
     allTeams: "全部国家/类别",
+    special: "✨ 特别/博物馆/可乐/Extra",
     museum: "🏛️ FIFA博物馆",
     coca: "🥤 可口可乐",
     extra: "⭐ 额外贴纸",
@@ -1363,6 +1370,7 @@ const i18n = {
     congrats: "🎉 Congratulations! You've collected all stickers! 🎉",
     empty: "✨ No stickers found. Try a different keyword. ✨",
     allTeams: "All Teams / Categories",
+    special: "✨ Special / Museum / Coke / Extra",
     museum: "🏛️ FIFA Museum",
     coca: "🥤 Coca‑Cola",
     extra: "⭐ Extra Stickers",
@@ -1454,7 +1462,6 @@ function getFilteredStickers() {
 function renderTeamTabs() {
   const teamsMap = new Map();
   teamsMap.set("all", i18n[currentLang].allTeams);
-  // 收集所有国家（teamId 不是特殊预设值的）
   const countrySet = new Set();
   for (const s of stickerDatabase) {
     if (s.teamId && !["museum","coca","extra","logo","special"].includes(s.teamId)) {
@@ -1468,7 +1475,6 @@ function renderTeamTabs() {
       teamsMap.set(countryId, sample.category);
     }
   }
-  // 特殊类别
   if (stickerDatabase.some(s => s.category === "FIFA Museum")) {
     teamsMap.set("museum", i18n[currentLang].museum);
   }
@@ -1481,7 +1487,6 @@ function renderTeamTabs() {
   if (stickerDatabase.some(s => s.category === "Panini Logo")) {
     teamsMap.set("logo", i18n[currentLang].logo);
   }
-  
   const container = document.getElementById("teamTabs");
   container.innerHTML = Array.from(teamsMap.entries()).map(([id, name]) => 
     `<div class="team-btn ${currentFilterTeam === id ? 'active' : ''}" data-team="${id}">${escapeHtml(name)}</div>`
