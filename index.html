@@ -239,7 +239,8 @@
 <div id="congratsToast" class="congrats-toast">🎉 恭喜！你集齐了全部贴纸！ 🎉</div>
 
 <script>
-
+// --------------------------------------------------------------
+// 官方完整清单
 // --------------------------------------------------------------
 const RAW_LISTING = `00 Panini Logo FOIL
 FWC1 Official Emblem FOIL
@@ -1244,7 +1245,8 @@ Coca-Cola Stickers (Complete Set of 20 unique stickers)
 19. Emiliano Martinez - Argentina
 20. Raúl Jiménez - Mexico
 
-Extra Sticker Checklist 20 stickers
+Extra Sticker Checklist
+20 stickers
 Achraf Hakimi - Morocco
 Alphonso Davies - Canada
 Christian Pulisic - USA
@@ -1266,7 +1268,7 @@ Moisés Caicedo - Ecuador
 Raúl Jiménez - Mexico
 Vinícius Júnior - Brazil`;
 
-// 解析贴纸函数
+// ---------- 解析贴纸（已修复 Host Cities 的 teamId）----------
 function buildStickers(raw) {
   const lines = raw.split(/\r?\n/);
   const stickers = [];
@@ -1298,7 +1300,7 @@ function buildStickers(raw) {
       if (inCoca) category = "Coca-Cola";
       if (inExtra) category = "Extra Sticker";
       
-      // 确定 teamId
+      // 确定 teamId（特殊处理 Host Countries & Cities）
       let teamId;
       if (category === "Special") teamId = "special";
       else if (category === "FIFA Museum") teamId = "museum";
@@ -1338,7 +1340,6 @@ function buildStickers(raw) {
   return unique;
 }
 
-// 初始数据库（包含所有基础贴纸）
 let stickerDatabase = buildStickers(RAW_LISTING);
 console.log("Loaded stickers:", stickerDatabase.length);
 
@@ -1349,64 +1350,6 @@ const cocaVersions = {
   eur: ["Lamine Yamal", "Joshua Kimmich", "Eduardo Camavinga", "Josko Gvardiol", "Federico Valverde", "Virgil van Dijk", "Alphonso Davies", "Raúl Jiménez", "William Saliba", "Lautaro Martínez", "Harry Kane", "Antonee Robinson"],
   row: ["Lamine Yamal", "Joshua Kimmich", "Harry Kane", "Edson Álvarez", "Josko Gvardiol", "Federico Valverde", "Jefferson Lerma", "Enner Valencia", "Jordan Ayew", "Virgil van Dijk", "Alphonso Davies", "Weston McKennie", "Eduardo Camavinga", "Lautaro Martínez"]
 };
-
-function updateCocaColaByRegion(region) {
-  // 移除所有现有可口可乐贴纸
-  stickerDatabase = stickerDatabase.filter(s => s.category !== "Coca-Cola");
-  const names = cocaVersions[region];
-  for (let i = 0; i < names.length; i++) {
-    stickerDatabase.push({
-      id: `cc${i+1}`,
-      name: names[i],
-      category: "Coca-Cola",
-      teamId: "coca",
-      collected: false,
-      code: `CC${i+1}`
-    });
-  }
-}
-
-// 双语文本库
-const i18n = {
-  zh: {
-    mainTitle: "🏆 2026 帕尼尼世界杯贴纸",
-    progressLabel: "📋 我的收集进度",
-    viewAll: "📋 全部贴纸",
-    viewMissing: "❌ 缺失列表",
-    searchPlaceholder: "🔍 搜索球员 / 国家 / 编号...",
-    footer: "⚡ 点击卡片标记“已收集” · 数据保存在你的手机里",
-    congrats: "🎉 恭喜！你集齐了全部贴纸！ 🎉",
-    empty: "✨ 没有找到贴纸，试试其他关键词 ✨",
-    allTeams: "全部国家/类别",
-    museum: "🏛️ FIFA博物馆",
-    coca: "🥤 可口可乐",
-    extra: "⭐ 额外贴纸",
-    logo: "🏷️ 帕尼尼标志",
-    host: "🌍 主办城市"
-  },
-  en: {
-    mainTitle: "🏆 2026 Panini World Cup Stickers",
-    progressLabel: "📋 My Collection Progress",
-    viewAll: "📋 All Stickers",
-    viewMissing: "❌ Missing List",
-    searchPlaceholder: "🔍 Search player / country / code...",
-    footer: "⚡ Tap to mark collected · Data saved locally",
-    congrats: "🎉 Congratulations! You've collected all stickers! 🎉",
-    empty: "✨ No stickers found. Try a different keyword. ✨",
-    allTeams: "All Teams / Categories",
-    museum: "🏛️ FIFA Museum",
-    coca: "🥤 Coca‑Cola",
-    extra: "⭐ Extra Stickers",
-    logo: "🏷️ Panini Logo",
-    host: "🌍 Host Cities"
-  }
-};
-
-let currentLang = localStorage.getItem('app_lang') || 'zh';
-let currentRegion = localStorage.getItem('app_region') || 'na';
-let currentView = "all";          // "all" 或 "missing"
-let currentFilterTeam = "all";
-let searchKeyword = "";
 
 // 更新可口可乐贴纸（根据地区）
 function updateCocaColaByRegion(region) {
@@ -1422,11 +1365,10 @@ function updateCocaColaByRegion(region) {
       code: `CC${i+1}`
     });
   }
-  // 重新整理顺序（按id排序）
   stickerDatabase.sort((a,b) => (a.id || '').localeCompare(b.id || ''));
 }
 
-// 判断是否为球员贴纸（用于显示跑步图标）
+// 判断是否为球员贴纸
 function isPlayerSticker(sticker) {
   if (sticker.name.includes("Team Logo") || sticker.name.includes("Team Photo") ||
       sticker.category === "FIFA Museum" || sticker.category === "Coca-Cola" ||
@@ -1500,7 +1442,6 @@ function getFilteredStickers() {
 function renderTeamTabs() {
   const teamsMap = new Map();
   teamsMap.set("all", i18n[currentLang].allTeams);
-  // 收集所有国家teamId（非特殊）
   const countrySet = new Set();
   for (const s of stickerDatabase) {
     if (s.teamId && !["museum","coca","extra","logo","host","special"].includes(s.teamId)) {
@@ -1512,7 +1453,6 @@ function renderTeamTabs() {
     const sample = stickerDatabase.find(s => s.teamId === cid);
     if (sample) teamsMap.set(cid, sample.category);
   }
-  // 特殊类别
   if (stickerDatabase.some(s => s.category === "FIFA Museum")) teamsMap.set("museum", i18n[currentLang].museum);
   if (stickerDatabase.some(s => s.category === "Coca-Cola")) teamsMap.set("coca", i18n[currentLang].coca);
   if (stickerDatabase.some(s => s.category === "Extra Sticker")) teamsMap.set("extra", i18n[currentLang].extra);
@@ -1572,7 +1512,57 @@ function renderAll() {
   renderStickersList();
 }
 
-// 语言切换
+// 双语文本库（包含地区按钮翻译）
+const i18n = {
+  zh: {
+    mainTitle: "🏆 2026 帕尼尼世界杯贴纸",
+    progressLabel: "📋 我的收集进度",
+    viewAll: "📋 全部贴纸",
+    viewMissing: "❌ 缺失列表",
+    searchPlaceholder: "🔍 搜索球员 / 国家 / 编号...",
+    footer: "⚡ 点击卡片标记“已收集” · 数据保存在你的手机里",
+    congrats: "🎉 恭喜！你集齐了全部贴纸！ 🎉",
+    empty: "✨ 没有找到贴纸，试试其他关键词 ✨",
+    allTeams: "全部国家/类别",
+    museum: "🏛️ FIFA博物馆",
+    coca: "🥤 可口可乐",
+    extra: "⭐ 额外贴纸",
+    logo: "🏷️ 帕尼尼标志",
+    host: "🌍 主办城市",
+    regionNA: "北美",
+    regionLATAM: "拉美",
+    regionEU: "欧洲",
+    regionROW: "世界其他"
+  },
+  en: {
+    mainTitle: "🏆 2026 Panini World Cup Stickers",
+    progressLabel: "📋 My Collection Progress",
+    viewAll: "📋 All Stickers",
+    viewMissing: "❌ Missing List",
+    searchPlaceholder: "🔍 Search player / country / code...",
+    footer: "⚡ Tap to mark collected · Data saved locally",
+    congrats: "🎉 Congratulations! You've collected all stickers! 🎉",
+    empty: "✨ No stickers found. Try a different keyword. ✨",
+    allTeams: "All Teams / Categories",
+    museum: "🏛️ FIFA Museum",
+    coca: "🥤 Coca‑Cola",
+    extra: "⭐ Extra Stickers",
+    logo: "🏷️ Panini Logo",
+    host: "🌍 Host Cities",
+    regionNA: "North America",
+    regionLATAM: "Latin America",
+    regionEU: "Europe",
+    regionROW: "Rest of World"
+  }
+};
+
+let currentLang = localStorage.getItem('app_lang') || 'zh';
+let currentRegion = localStorage.getItem('app_region') || 'na';
+let currentView = "all";
+let currentFilterTeam = "all";
+let searchKeyword = "";
+
+// 语言切换（同时更新地区按钮文字）
 function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('app_lang', lang);
@@ -1580,6 +1570,7 @@ function setLanguage(lang) {
     if (btn.getAttribute('data-lang') === lang) btn.classList.add('active');
     else btn.classList.remove('active');
   });
+  // 更新界面静态文本
   document.getElementById('mainTitle').innerText = i18n[lang].mainTitle;
   document.getElementById('progressLabel').innerText = i18n[lang].progressLabel;
   document.getElementById('viewAllBtn').innerText = i18n[lang].viewAll;
@@ -1587,6 +1578,19 @@ function setLanguage(lang) {
   document.getElementById('searchInput').placeholder = i18n[lang].searchPlaceholder;
   document.getElementById('footerText').innerText = i18n[lang].footer;
   document.getElementById('congratsToast').innerText = i18n[lang].congrats;
+  
+  // 更新地区按钮文字
+  const regionMap = {
+    na: i18n[lang].regionNA,
+    latam: i18n[lang].regionLATAM,
+    eur: i18n[lang].regionEU,
+    row: i18n[lang].regionROW
+  };
+  document.querySelectorAll('.region-btn').forEach(btn => {
+    const region = btn.getAttribute('data-region');
+    btn.innerText = regionMap[region];
+  });
+  
   renderTeamTabs();
   renderStickersList();
 }
@@ -1604,9 +1608,7 @@ function setRegion(region) {
   stickerDatabase.filter(s => s.category === "Coca-Cola").forEach(s => {
     oldCocaMap[s.name] = s.collected;
   });
-  // 更新数据库
   updateCocaColaByRegion(region);
-  // 恢复收集状态（匹配球员名）
   stickerDatabase.filter(s => s.category === "Coca-Cola").forEach(s => {
     if (oldCocaMap[s.name] !== undefined) s.collected = oldCocaMap[s.name];
   });
@@ -1619,8 +1621,8 @@ function setRegion(region) {
 function init() {
   loadCollectedStatus();
   setLanguage(currentLang);
-  setRegion(currentRegion); // 这会调用 updateCocaColaByRegion 并渲染
-  // 绑定视图切换
+  setRegion(currentRegion);
+  // 视图切换
   const allBtn = document.getElementById("viewAllBtn");
   const missingBtn = document.getElementById("viewMissingBtn");
   allBtn.addEventListener("click", () => {
@@ -1635,7 +1637,6 @@ function init() {
     allBtn.classList.remove("active");
     renderAll();
   });
-  // 搜索框
   const searchInput = document.getElementById("searchInput");
   searchInput.addEventListener("input", (e) => {
     searchKeyword = e.target.value;
@@ -1651,7 +1652,7 @@ function init() {
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.addEventListener('click', () => setLanguage(btn.getAttribute('data-lang')));
   });
-  // 地区按钮
+  // 地区按钮（注意：点击时仅切换地区，不改变语言）
   document.querySelectorAll('.region-btn').forEach(btn => {
     btn.addEventListener('click', () => setRegion(btn.getAttribute('data-region')));
   });
