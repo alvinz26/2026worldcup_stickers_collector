@@ -239,11 +239,7 @@
 <div id="congratsToast" class="congrats-toast">🎉 恭喜！你集齐了全部贴纸！ 🎉</div>
 
 <script>
-// --------------------------------------------------------------
-// 官方完整清单（基于用户提供的最新文本，包含所有国家队和特殊贴纸）
-// 注意：由于文本极长，我们直接内嵌一个对象，但实际我们会通过解析函数动态生成贴纸。
-// 为了数据准确性，我们将使用用户之前提供的清单字符串（在对话历史中可找到），
-// 此处为了代码完整，我将重新整理并嵌入完整的 RAW_LISTING。
+
 // --------------------------------------------------------------
 const RAW_LISTING = `00 Panini Logo FOIL
 FWC1 Official Emblem FOIL
@@ -1302,16 +1298,22 @@ function buildStickers(raw) {
       }
       if (inCoca) category = "Coca-Cola";
       if (inExtra) category = "Extra Sticker";
+      
+      // 确定 teamId
+      let teamId;
+      if (category === "Special") teamId = "special";
+      else if (category === "FIFA Museum") teamId = "museum";
+      else if (category === "Coca-Cola") teamId = "coca";
+      else if (category === "Extra Sticker") teamId = "extra";
+      else if (category === "Panini Logo") teamId = "logo";
+      else if (category === "Host Countries & Cities") teamId = "host";
+      else teamId = category.toLowerCase().replace(/[^a-z]/g, '');
+      
       stickers.push({
         id: code,
         name: displayName,
         category: category,
-        teamId: (category === "Special" ? "special" : 
-                 category === "FIFA Museum" ? "museum" :
-                 category === "Coca-Cola" ? "coca" :
-                 category === "Extra Sticker" ? "extra" :
-                 category === "Panini Logo" ? "logo" : 
-                 category.toLowerCase().replace(/[^a-z]/g, '')),
+        teamId: teamId,
         collected: false,
         code: code
       });
